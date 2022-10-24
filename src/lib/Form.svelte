@@ -2,7 +2,7 @@
   import WorkoutDay from "./WorkoutDay.svelte";
   import Print from "./Print.svelte";
 
-  let exercises = ["Bench Press", "Deadlift", "Squat"];
+  import exercises from "./exercises.json";
   let reps = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
   let sets = [1, 2, 3, 4, 5];
   let workoutItems = [];
@@ -47,11 +47,12 @@
 
       <div class="mb-3">
         <label for="exercise" class="form-label">Exercise</label>
-        <select id="exercise" class="form-select" aria-label="Exercise" bind:value={selectedExercise}>
+        <input class="form-control" list="exerciseOptions" id="exercise" placeholder="Type to search..." bind:value={selectedExercise}>
+        <datalist id="exerciseOptions">
           {#each exercises as exercise}
             <option value={exercise}>{exercise}</option>
           {/each}
-        </select>
+        </datalist>
       </div>
 
       <div class="row mb-3">

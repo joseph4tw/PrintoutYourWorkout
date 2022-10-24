@@ -1,6 +1,4 @@
 <script>
-  import { prevent_default, set_store_value } from "svelte/internal";
-
   export let day;
   export let exercises;
 

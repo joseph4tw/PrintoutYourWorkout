@@ -1,5 +1,6 @@
 <script>
   import WorkoutDay from "./WorkoutDay.svelte";
+  import Print from "./Print.svelte";
 
   let exercises = ["Bench Press", "Deadlift", "Squat"];
   let reps = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
@@ -113,6 +114,10 @@
     <WorkoutDay day={item.day} exercises={item.exercises} />
   {/if}
 {/each}
+
+{#if workoutItems.length > 0}
+  <Print />
+{/if}
 
 <style>
   @media print {

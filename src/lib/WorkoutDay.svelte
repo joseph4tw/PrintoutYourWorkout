@@ -1,6 +1,7 @@
 <script>
   export let day;
   export let exercises;
+  export let includeNotes;
 
   const maxSets = exercises.reduce((prev, cur) => Math.max(cur.sets, prev), 0);
 </script>
@@ -38,14 +39,18 @@
     </table>
   </div>
 </div>
-<div class="row">
-  <div class="col">
-    <strong>Notes:</strong>
-    <hr class="mt-0 mb-4" />
-    <hr class="mb-4" />
-    <hr class="mb-4" />
+
+{#if includeNotes}
+  <div class="row">
+    <div class="col">
+      <strong>Notes:</strong>
+      <hr class="mt-0 mb-4" />
+      <hr class="mb-4" />
+      <hr class="mb-4" />
+    </div>
   </div>
-</div>
+{/if}
+
 </section>
 
 <style>

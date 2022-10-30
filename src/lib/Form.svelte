@@ -8,6 +8,7 @@
   let workoutItems = [];
   let selectedExercise, selectedSets, selectedReps;
   let onMonday, onTuesday, onWednesday, onThursday, onFriday, onSaturday, onSunday;
+  let includeNotes = true;
 
   const addWorkoutItem = () => {
     const exercise = {
@@ -46,13 +47,15 @@
     <form>
 
       <div class="mb-3">
-        <label for="exercise" class="form-label">Exercise</label>
-        <input class="form-control" list="exerciseOptions" id="exercise" placeholder="Type to search..." bind:value={selectedExercise}>
-        <datalist id="exerciseOptions">
-          {#each exercises as exercise}
-            <option value={exercise}>{exercise}</option>
-          {/each}
-        </datalist>
+        <div class="col">
+          <label for="exercise" class="form-label">Exercise</label>
+          <input class="form-control" list="exerciseOptions" id="exercise" placeholder="Type to search..." bind:value={selectedExercise}>
+          <datalist id="exerciseOptions">
+            {#each exercises as exercise}
+              <option value={exercise}>{exercise}</option>
+            {/each}
+          </datalist>
+        </div>
       </div>
 
       <div class="row mb-3">
@@ -110,9 +113,30 @@
 
 <hr class="my-4 no-print" />
 
+{#if workoutItems.length > 0}
+<div class="row no-print">
+  <div class="col">
+    <form>
+
+      <div class="row mb-3">
+        <div class="col">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="include-notes" bind:checked={includeNotes}>
+            <label class="form-check-label" for="include-notes">
+              Include Notes
+            </label>
+          </div>
+        </div>
+      </div>
+
+    </form>
+  </div>
+</div>
+{/if}
+
 {#each workoutItems as item}
   {#if item}
-    <WorkoutDay day={item.day} exercises={item.exercises} />
+    <WorkoutDay day={item.day} exercises={item.exercises} includeNotes={includeNotes} />
   {/if}
 {/each}
 

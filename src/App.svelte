@@ -8,7 +8,7 @@
 
   <Form/>
 </main>
-<footer>
+<footer class="mt-3">
   Copyright &copy; {(new Date()).getFullYear()} Between the Brackets
 </footer>
 

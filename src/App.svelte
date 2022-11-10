@@ -8,6 +8,9 @@
 
   <Form/>
 </main>
+<footer>
+  Copyright &copy; {(new Date()).getFullYear()} Between the Brackets
+</footer>
 
 <style>
   @media print {

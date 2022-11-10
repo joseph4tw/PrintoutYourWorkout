@@ -9,9 +9,11 @@
   let selectedExercise, selectedSets, selectedReps;
   let onMonday, onTuesday, onWednesday, onThursday, onFriday, onSaturday, onSunday;
   let includeNotes = true;
+  let inEditMode = false;
 
   const addWorkoutItem = () => {
     const exercise = {
+      id: (new Date()).getTime(),
       name: selectedExercise,
       sets: Number(selectedSets),
       reps: Number(selectedReps),
@@ -39,6 +41,58 @@
     onFriday && addExercise("Friday", 4, exercise);
     onSaturday && addExercise("Saturday", 5, exercise);
     onSunday && addExercise("Sunday", 6, exercise);
+  };
+
+  const getDayIndex = (day) => {
+    switch (day.toLowerCase()) {
+      case "monday":
+        return 0;
+
+      case "tuesday":
+        return 1;
+
+      case "wednesday":
+        return 2;
+
+      case "thursday":
+        return 3;
+
+      case "friday":
+        return 4;
+
+      case "saturday":
+        return 5;
+      
+      case "sunday":
+        return 6;
+
+      default:
+        throw Error(`Day ${day} not found.`);
+    }
+  };
+
+  const handleRemoveExercise = (event) => {
+    const { day, id } = event.detail;
+    const index = getDayIndex(day);
+
+    const foundIndex = workoutItems[index].exercises.findIndex(x => x.id === id);
+
+    if (foundIndex < 0) {
+      console.error(`Exercise on day:${day} with id:${id} not found.`);
+      return;
+    }
+
+    const deleted = workoutItems[index].exercises.splice(foundIndex, 1);
+
+    if (workoutItems[index].exercises.length === 0) {
+      workoutItems[index] = undefined;
+    }
+    else {
+      // force render
+      workoutItems[index].exercises = workoutItems[index].exercises;
+    }
+
+    console.log(`deleted exercise`, deleted);
   };
 </script>
 
@@ -119,13 +173,18 @@
     <form>
 
       <div class="row mb-3">
-        <div class="col">
+        <div class="col d-flex align-self-center">
           <div class="form-check">
             <input class="form-check-input" type="checkbox" value="" id="include-notes" bind:checked={includeNotes}>
             <label class="form-check-label" for="include-notes">
               Include Notes
             </label>
           </div>
+        </div>
+
+        <div class="col d-flex justify-content-end">
+          <input type="checkbox" class="btn-check" id="btn-check-outlined" autocomplete="off" bind:checked={inEditMode}>
+          <label class="btn btn-outline-primary" for="btn-check-outlined">Edit Exercises</label><br>
         </div>
       </div>
 
@@ -136,7 +195,13 @@
 
 {#each workoutItems as item}
   {#if item}
-    <WorkoutDay day={item.day} exercises={item.exercises} includeNotes={includeNotes} />
+    <WorkoutDay
+      on:removeExercise={handleRemoveExercise}
+      day={item.day}
+      exercises={item.exercises}
+      includeNotes={includeNotes}
+      inEditMode={inEditMode}
+    />
   {/if}
 {/each}
 

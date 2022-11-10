@@ -73,26 +73,63 @@
 
   const handleRemoveExercise = (event) => {
     const { day, id } = event.detail;
-    const index = getDayIndex(day);
+    const dayIndex = getDayIndex(day);
 
-    const foundIndex = workoutItems[index].exercises.findIndex(x => x.id === id);
+    const exerciseIndex = workoutItems[dayIndex].exercises.findIndex(x => x.id === id);
 
-    if (foundIndex < 0) {
+    if (exerciseIndex < 0) {
       console.error(`Exercise on day:${day} with id:${id} not found.`);
       return;
     }
 
-    const deleted = workoutItems[index].exercises.splice(foundIndex, 1);
+    if (!confirm(`Are you sure you want to delete ${workoutItems[dayIndex].exercises[exerciseIndex].name} from ${day}?`)) {
+      return;
+    }
 
-    if (workoutItems[index].exercises.length === 0) {
-      workoutItems[index] = undefined;
+    workoutItems[dayIndex].exercises.splice(exerciseIndex, 1);
+
+    if (workoutItems[dayIndex].exercises.length === 0) {
+      workoutItems[dayIndex] = undefined;
     }
     else {
       // force render
-      workoutItems[index].exercises = workoutItems[index].exercises;
+      workoutItems[dayIndex].exercises = workoutItems[dayIndex].exercises;
+    }
+  };
+
+  const handleMoveExercise = (event) => {
+    const { day, id, direction } = event.detail;
+    const dayIndex = getDayIndex(day);
+
+    const exerciseIndex = workoutItems[dayIndex].exercises.findIndex(x => x.id === id);
+
+    if (exerciseIndex < 0) {
+      console.error(`Exercise on day:${day} with id:${id} not found.`);
+      return;
     }
 
-    console.log(`deleted exercise`, deleted);
+    if (exerciseIndex === 0 && direction === 'up') {
+      // do nothing
+      return;
+    }
+
+    if (exerciseIndex === workoutItems[dayIndex].exercises.length - 1 && direction === 'down') {
+      // do nothing
+      return;
+    }
+
+    const exerciseToMove = workoutItems[dayIndex].exercises[exerciseIndex];
+    workoutItems[dayIndex].exercises.splice(exerciseIndex, 1);
+    
+    if (direction === 'up') {
+      workoutItems[dayIndex].exercises.splice(exerciseIndex - 1, 0, exerciseToMove);
+    }
+    else {
+      workoutItems[dayIndex].exercises.splice(exerciseIndex + 1, 0, exerciseToMove);
+    }
+
+    // force render
+    workoutItems[dayIndex].exercises = workoutItems[dayIndex].exercises;
   };
 </script>
 
@@ -103,7 +140,7 @@
       <div class="mb-3">
         <div class="col">
           <label for="exercise" class="form-label">Exercise</label>
-          <input class="form-control" list="exerciseOptions" id="exercise" placeholder="Type to search..." bind:value={selectedExercise}>
+          <input class="form-control" list="exerciseOptions" id="exercise" placeholder="Type to search or add your own..." bind:value={selectedExercise}>
           <datalist id="exerciseOptions">
             {#each exercises as exercise}
               <option value={exercise}>{exercise}</option>
@@ -197,6 +234,7 @@
   {#if item}
     <WorkoutDay
       on:removeExercise={handleRemoveExercise}
+      on:moveExercise={handleMoveExercise}
       day={item.day}
       exercises={item.exercises}
       includeNotes={includeNotes}

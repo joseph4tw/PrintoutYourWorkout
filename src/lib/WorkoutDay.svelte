@@ -16,6 +16,14 @@
       id,
     });
   }
+
+  function moveExercise(day, id, direction) {
+    dispatch("moveExercise", {
+      day,
+      id,
+      direction,
+    });
+  }
 </script>
 
 <section>
@@ -34,14 +42,28 @@
         <tbody>
           {#each exercises as exercise}
             <tr>
-              <th scope="row">
+              <th class="align-middle" scope="row">
                 {#if inEditMode}
                   <a
-                    href="#"
-                    class="text-decoration-none text-danger no-print"
+                    href="#_"
+                    class="me-1 fs-5 text-decoration-none text-danger no-print"
                     on:click={() => removeExercise(day, exercise.id)}
                   >
                     <i class="bi bi-x-circle" />
+                  </a>
+                  <a
+                    href="#_"
+                    class="me-1 fs-5 text-decoration-none text-primary no-print"
+                    on:click={() => moveExercise(day, exercise.id, 'up')}
+                  >
+                    <i class="bi bi-arrow-up-circle" />
+                  </a>
+                  <a
+                    href="#_"
+                    class="me-1 fs-5 text-decoration-none text-primary no-print"
+                    on:click={() => moveExercise(day, exercise.id, 'down')}
+                  >
+                    <i class="bi bi-arrow-down-circle" />
                   </a>
                 {/if}
                 {exercise.name}:
@@ -49,7 +71,7 @@
               </th>
               {#each Array(maxSets) as _, index}
                 {#if index < exercise.sets}
-                  <td class="text-center">x</td>
+                  <td class="text-center align-middle">x</td>
                 {:else}
                   <td />
                 {/if}

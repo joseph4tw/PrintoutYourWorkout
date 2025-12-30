@@ -1,24 +1,22 @@
 <script>
-  import { createEventDispatcher } from "svelte";
-
-  const dispatch = createEventDispatcher();
-
   export let day;
   export let exercises;
   export let includeNotes;
   export let inEditMode;
+  export let onRemoveExercise;
+  export let onMoveExercise;
 
   const maxSets = exercises.reduce((prev, cur) => Math.max(cur.sets, prev), 0);
 
   function removeExercise(day, id) {
-    dispatch("removeExercise", {
+    onRemoveExercise?.({
       day,
       id,
     });
   }
 
   function moveExercise(day, id, direction) {
-    dispatch("moveExercise", {
+    onMoveExercise?.({
       day,
       id,
       direction,
@@ -47,23 +45,26 @@
                   <a
                     href="#_"
                     class="me-1 fs-5 text-decoration-none text-danger no-print"
+                    aria-label="Remove exercise"
                     on:click={() => removeExercise(day, exercise.id)}
                   >
-                    <i class="bi bi-x-circle" />
+                    <i class="bi bi-x-circle"></i>
                   </a>
                   <a
                     href="#_"
                     class="me-1 fs-5 text-decoration-none text-primary no-print"
+                    aria-label="Move exercise up"
                     on:click={() => moveExercise(day, exercise.id, 'up')}
                   >
-                    <i class="bi bi-arrow-up-circle" />
+                    <i class="bi bi-arrow-up-circle"></i>
                   </a>
                   <a
                     href="#_"
                     class="me-1 fs-5 text-decoration-none text-primary no-print"
+                    aria-label="Move exercise down"
                     on:click={() => moveExercise(day, exercise.id, 'down')}
                   >
-                    <i class="bi bi-arrow-down-circle" />
+                    <i class="bi bi-arrow-down-circle"></i>
                   </a>
                 {/if}
                 {exercise.name}:
@@ -73,7 +74,7 @@
                 {#if index < exercise.sets}
                   <td class="text-center align-middle">x</td>
                 {:else}
-                  <td />
+                  <td></td>
                 {/if}
               {/each}
             </tr>

@@ -71,8 +71,8 @@
     }
   };
 
-  const handleRemoveExercise = (event) => {
-    const { day, id } = event.detail;
+  const handleRemoveExercise = (detail) => {
+    const { day, id } = detail;
     const dayIndex = getDayIndex(day);
 
     const exerciseIndex = workoutItems[dayIndex].exercises.findIndex(x => x.id === id);
@@ -90,15 +90,15 @@
 
     if (workoutItems[dayIndex].exercises.length === 0) {
       workoutItems[dayIndex] = undefined;
+      workoutItems = workoutItems;
     }
     else {
-      // force render
-      workoutItems[dayIndex].exercises = workoutItems[dayIndex].exercises;
+      workoutItems = workoutItems;
     }
   };
 
-  const handleMoveExercise = (event) => {
-    const { day, id, direction } = event.detail;
+  const handleMoveExercise = (detail) => {
+    const { day, id, direction } = detail;
     const dayIndex = getDayIndex(day);
 
     const exerciseIndex = workoutItems[dayIndex].exercises.findIndex(x => x.id === id);
@@ -120,7 +120,7 @@
 
     const exerciseToMove = workoutItems[dayIndex].exercises[exerciseIndex];
     workoutItems[dayIndex].exercises.splice(exerciseIndex, 1);
-    
+
     if (direction === 'up') {
       workoutItems[dayIndex].exercises.splice(exerciseIndex - 1, 0, exerciseToMove);
     }
@@ -128,8 +128,7 @@
       workoutItems[dayIndex].exercises.splice(exerciseIndex + 1, 0, exerciseToMove);
     }
 
-    // force render
-    workoutItems[dayIndex].exercises = workoutItems[dayIndex].exercises;
+    workoutItems = workoutItems;
   };
 </script>
 
@@ -233,8 +232,8 @@
 {#each workoutItems as item}
   {#if item}
     <WorkoutDay
-      on:removeExercise={handleRemoveExercise}
-      on:moveExercise={handleMoveExercise}
+      onRemoveExercise={handleRemoveExercise}
+      onMoveExercise={handleMoveExercise}
       day={item.day}
       exercises={item.exercises}
       includeNotes={includeNotes}

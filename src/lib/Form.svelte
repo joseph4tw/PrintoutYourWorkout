@@ -19,11 +19,14 @@
     try {
       const json = JSON.stringify(workoutItems);
       const jsonBytes = new TextEncoder().encode(json);
-      const compressed = pako.gzip(jsonBytes);
+      const compressed = pako.deflate(jsonBytes);
 
-      const binaryString = Array.from(compressed)
-        .map(byte => String.fromCharCode(byte))
-        .join('');
+      // Convert Uint8Array to base64 safely
+      let binaryString = '';
+      const len = compressed.length;
+      for (let i = 0; i < len; i++) {
+        binaryString += String.fromCharCode(compressed[i]);
+      }
 
       return btoa(binaryString);
     } catch (error) {
@@ -37,12 +40,14 @@
     try {
       const binaryString = atob(encoded);
 
-      const compressedBytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
+      // Convert base64 string back to Uint8Array
+      const len = binaryString.length;
+      const compressedBytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
         compressedBytes[i] = binaryString.charCodeAt(i);
       }
 
-      const decompressed = pako.ungzip(compressedBytes);
+      const decompressed = pako.inflate(compressedBytes);
       const json = new TextDecoder().decode(decompressed);
       return JSON.parse(json);
     } catch (error) {

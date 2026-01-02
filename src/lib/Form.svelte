@@ -1,4 +1,6 @@
 <script>
+  import { onMount } from "svelte";
+  import pako from "pako";
   import WorkoutDay from "./WorkoutDay.svelte";
   import Print from "./Print.svelte";
 
@@ -10,6 +12,96 @@
   let onMonday, onTuesday, onWednesday, onThursday, onFriday, onSaturday, onSunday;
   let includeNotes = true;
   let inEditMode = false;
+  let copySuccess = false;
+
+  // Serialize workoutItems with gzip compression
+  const serializeWorkout = () => {
+    try {
+      const json = JSON.stringify(workoutItems);
+      const jsonBytes = new TextEncoder().encode(json);
+      const compressed = pako.gzip(jsonBytes);
+
+      const binaryString = Array.from(compressed)
+        .map(byte => String.fromCharCode(byte))
+        .join('');
+
+      return btoa(binaryString);
+    } catch (error) {
+      console.error("Failed to serialize workout:", error);
+      return null;
+    }
+  };
+
+  // Deserialize compressed workout data
+  const deserializeWorkout = (encoded) => {
+    try {
+      const binaryString = atob(encoded);
+
+      const compressedBytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        compressedBytes[i] = binaryString.charCodeAt(i);
+      }
+
+      const decompressed = pako.ungzip(compressedBytes);
+      const json = new TextDecoder().decode(decompressed);
+      return JSON.parse(json);
+    } catch (error) {
+      console.error("Failed to deserialize workout:", error);
+      return null;
+    }
+  };
+
+  // Load workout from URL on mount
+  onMount(() => {
+    const params = new URLSearchParams(window.location.search);
+    const workoutParam = params.get("workout");
+
+    if (workoutParam) {
+      const loaded = deserializeWorkout(workoutParam);
+      if (loaded && Array.isArray(loaded)) {
+        workoutItems = loaded;
+      }
+    }
+  });
+
+  // Copy workout link to clipboard
+  const handleCopyLink = async () => {
+    const encoded = serializeWorkout();
+    if (!encoded) {
+      alert("Failed to generate shareable link");
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("workout", encoded);
+    const shareableUrl = url.toString();
+
+    try {
+      await navigator.clipboard.writeText(shareableUrl);
+      copySuccess = true;
+      setTimeout(() => {
+        copySuccess = false;
+      }, 2000);
+    } catch (error) {
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = shareableUrl;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand("copy");
+        copySuccess = true;
+        setTimeout(() => {
+          copySuccess = false;
+        }, 2000);
+      } catch (err) {
+        alert("Failed to copy link. Please copy manually: " + shareableUrl);
+      }
+      document.body.removeChild(textArea);
+    }
+  };
 
   const addWorkoutItem = () => {
     const exercise = {
@@ -221,6 +313,15 @@
         <div class="col d-flex justify-content-end">
           <input type="checkbox" class="btn-check" id="btn-check-outlined" autocomplete="off" bind:checked={inEditMode}>
           <label class="btn btn-outline-primary" for="btn-check-outlined">Edit Exercises</label><br>
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col">
+          <button type="button" class="btn btn-success w-100" on:click={handleCopyLink}>
+            <i class="bi bi-link-45deg me-2"></i>
+            {copySuccess ? 'Link Copied!' : 'Copy Shareable Link'}
+          </button>
         </div>
       </div>
 

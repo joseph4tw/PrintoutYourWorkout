@@ -13,6 +13,7 @@
   let includeNotes = true;
   let inEditMode = false;
   let copySuccess = false;
+  let addSuccess = false;
 
   // Serialize workoutItems with gzip compression
   const serializeWorkout = () => {
@@ -138,6 +139,12 @@
     onFriday && addExercise("Friday", 4, exercise);
     onSaturday && addExercise("Saturday", 5, exercise);
     onSunday && addExercise("Sunday", 6, exercise);
+
+    const anyDaySelected = onMonday || onTuesday || onWednesday || onThursday || onFriday || onSaturday || onSunday;
+    if (selectedExercise && anyDaySelected) {
+      addSuccess = true;
+      setTimeout(() => { addSuccess = false; }, 2000);
+    }
   };
 
   const getDayIndex = (day) => {
@@ -176,10 +183,6 @@
 
     if (exerciseIndex < 0) {
       console.error(`Exercise on day:${day} with id:${id} not found.`);
-      return;
-    }
-
-    if (!confirm(`Are you sure you want to delete ${workoutItems[dayIndex].exercises[exerciseIndex].name} from ${day}?`)) {
       return;
     }
 
@@ -293,7 +296,13 @@
         </div>
       </div>
 
-      <button type="button" class="btn btn-primary w-100" on:click={addWorkoutItem}>Add To Workout Plan</button>
+      <button type="button" class="btn {addSuccess ? 'btn-success' : 'btn-primary'} w-100 add-workout-btn" on:click={addWorkoutItem}>
+        {#if addSuccess}
+          <i class="bi bi-check-circle-fill me-2"></i>Added!
+        {:else}
+          Add To Workout Plan
+        {/if}
+      </button>
     </form>
   </div>
 </div>
@@ -353,6 +362,10 @@
 {/if}
 
 <style>
+  .add-workout-btn {
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
   @media print {
     .no-print {
       display: none;

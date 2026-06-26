@@ -1,0 +1,148 @@
+# PrintoutYourWorkout — LLM Usage Guide
+
+## What this app does
+
+PrintoutYourWorkout is a no-backend, no-login workout plan builder. Users
+compose a weekly workout schedule (exercises, sets, reps, days), then share or
+bookmark it via a single URL. There is no server, no database, and no
+authentication — the entire workout is encoded in the URL itself.
+
+Live at: https://www.printoutyourworkout.com/
+
+---
+
+## URL schema
+
+A shareable workout is passed as a single query parameter:
+
+    https://www.printoutyourworkout.com/?workout=<encoded>
+
+The `<encoded>` value is produced by this pipeline:
+
+    JSON  →  zlib deflate (pako)  →  base64  →  URL-encode
+
+To decode, reverse the pipeline:
+
+    URL-decode  →  base64 decode  →  zlib inflate  →  JSON parse
+
+---
+
+## JSON data structure
+
+The JSON value is an array of exactly 7 elements, one per day of the week,
+indexed Monday (0) through Sunday (6).
+
+Each element is either `null` (no exercises planned that day) or an object:
+
+```json
+[
+  {
+    "day": "Monday",
+    "exercises": [
+      { "id": 1700000000000, "name": "Bench Press", "sets": 3, "reps": 10 },
+      { "id": 1700000000001, "name": "Push-up",     "sets": 4, "reps": 15 }
+    ]
+  },
+  null,
+  {
+    "day": "Wednesday",
+    "exercises": [
+      { "id": 1700000000002, "name": "Squat", "sets": 4, "reps": 8 }
+    ]
+  },
+  null,
+  null,
+  null,
+  null
+]
+```
+
+### Field reference
+
+| Field              | Type   | Notes                                           |
+|--------------------|--------|-------------------------------------------------|
+| `day`              | string | Full English day name ("Monday" … "Sunday")     |
+| `exercises[].id`   | number | Unix timestamp (ms). Any unique integer is fine |
+| `exercises[].name` | string | Exercise name (free text)                       |
+| `exercises[].sets` | number | Number of sets                                  |
+| `exercises[].reps` | number | Number of reps per set                          |
+
+---
+
+## Python example
+
+```python
+import json, zlib, base64, urllib.parse
+
+def build_workout_url(workout: list, base: str = "https://www.printoutyourworkout.com/") -> str:
+    json_bytes  = json.dumps(workout, separators=(",", ":")).encode("utf-8")
+    compressed  = zlib.compress(json_bytes, level=6, wbits=-15)  # raw deflate (no zlib header)
+    b64         = base64.b64encode(compressed).decode("ascii")
+    encoded     = urllib.parse.quote(b64, safe="")
+    return f"{base}?workout={encoded}"
+
+
+workout = [
+    {
+        "day": "Monday",
+        "exercises": [
+            {"id": 1700000000000, "name": "Bench Press", "sets": 3, "reps": 10},
+            {"id": 1700000000001, "name": "Push-up",     "sets": 4, "reps": 15},
+        ],
+    },
+    None,  # Tuesday — rest day
+    {
+        "day": "Wednesday",
+        "exercises": [
+            {"id": 1700000000002, "name": "Squat", "sets": 4, "reps": 8},
+        ],
+    },
+    None, None, None, None,  # Thu–Sun — rest days
+]
+
+print(build_workout_url(workout))
+```
+
+> **Note on deflate:** pako's `deflate()` (used by the app) produces *raw*
+> deflate without a zlib wrapper. Pass `wbits=-15` to Python's `zlib.compress`
+> to match that format.
+
+---
+
+## Node.js example
+
+```js
+import { deflateRawSync } from "node:zlib";
+
+function buildWorkoutUrl(workout, base = "https://www.printoutyourworkout.com/") {
+  const json       = JSON.stringify(workout);
+  const input      = Buffer.from(json, "utf8");
+  const compressed = deflateRawSync(input, { level: 6 });
+  const b64        = compressed.toString("base64");
+  const encoded    = encodeURIComponent(b64);
+  return `${base}?workout=${encoded}`;
+}
+
+const workout = [
+  {
+    day: "Monday",
+    exercises: [
+      { id: 1700000000000, name: "Bench Press", sets: 3, reps: 10 },
+      { id: 1700000000001, name: "Push-up",     sets: 4, reps: 15 },
+    ],
+  },
+  null, // Tuesday — rest day
+  {
+    day: "Wednesday",
+    exercises: [
+      { id: 1700000000002, name: "Squat", sets: 4, reps: 8 },
+    ],
+  },
+  null, null, null, null, // Thu–Sun — rest days
+];
+
+console.log(buildWorkoutUrl(workout));
+```
+
+> **Note:** `deflateRawSync` produces raw deflate (no zlib header), which
+> matches what pako emits in the browser.

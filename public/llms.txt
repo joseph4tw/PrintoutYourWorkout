@@ -19,11 +19,11 @@ A shareable workout is passed as a single query parameter:
 
 The `<encoded>` value is produced by this pipeline:
 
-    JSON  →  zlib deflate (pako)  →  base64  →  URL-encode
+    JSON  →  zlib deflate (pako, standard zlib format WITH header)  →  base64  →  URL-encode
 
 To decode, reverse the pipeline:
 
-    URL-decode  →  base64 decode  →  zlib inflate  →  JSON parse
+    URL-decode  →  base64 decode  →  zlib inflate (standard zlib format)  →  JSON parse
 
 ---
 
@@ -76,7 +76,7 @@ import json, zlib, base64, urllib.parse
 
 def build_workout_url(workout: list, base: str = "https://www.printoutyourworkout.com/") -> str:
     json_bytes  = json.dumps(workout, separators=(",", ":")).encode("utf-8")
-    compressed  = zlib.compress(json_bytes, level=6, wbits=-15)  # raw deflate (no zlib header)
+    compressed  = zlib.compress(json_bytes, level=6)  # standard zlib format (with header)
     b64         = base64.b64encode(compressed).decode("ascii")
     encoded     = urllib.parse.quote(b64, safe="")
     return f"{base}?workout={encoded}"
@@ -103,21 +103,23 @@ workout = [
 print(build_workout_url(workout))
 ```
 
-> **Note on deflate:** pako's `deflate()` (used by the app) produces *raw*
-> deflate without a zlib wrapper. Pass `wbits=-15` to Python's `zlib.compress`
-> to match that format.
+> **Note on deflate:** pako's `deflate()` (used by the app) produces the
+> *standard zlib format* (RFC 1950 — includes the 2-byte header and checksum
+> trailer), not raw deflate. Python's `zlib.compress()` produces this format
+> by default — do not pass `wbits=-15` (that produces raw deflate and will
+> cause `pako.inflate()` to fail with "incorrect header check").
 
 ---
 
 ## Node.js example
 
 ```js
-import { deflateRawSync } from "node:zlib";
+import { deflateSync } from "node:zlib";
 
 function buildWorkoutUrl(workout, base = "https://www.printoutyourworkout.com/") {
   const json       = JSON.stringify(workout);
   const input      = Buffer.from(json, "utf8");
-  const compressed = deflateRawSync(input, { level: 6 });
+  const compressed = deflateSync(input, { level: 6 });
   const b64        = compressed.toString("base64");
   const encoded    = encodeURIComponent(b64);
   return `${base}?workout=${encoded}`;
@@ -144,5 +146,7 @@ const workout = [
 console.log(buildWorkoutUrl(workout));
 ```
 
-> **Note:** `deflateRawSync` produces raw deflate (no zlib header), which
-> matches what pako emits in the browser.
+> **Note:** `deflateSync` produces the standard zlib format (with header),
+> which matches what `pako.deflate()` emits in the browser. Do not use
+> `deflateRawSync` — that omits the header and will cause `pako.inflate()`
+> to fail with "incorrect header check".
